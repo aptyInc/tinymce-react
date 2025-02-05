@@ -1,0 +1,94 @@
+name: CI
+on:
+  push:
+    branches:
+      - development
+      - qa
+      - staging
+      - production
+      - labs
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  rules:
+    name: Rules
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.validations.outputs.branch_name }}
+      should_deploy: ${{ steps.validations.outputs.should_deploy}}
+    steps:
+      - name: Fetch Branch Name
+        uses: aptyInc/gha-branch-name@master
+        id: validations
+
+  lint:
+    name: LINT_TEST
+    needs: [rules]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Caching node modules
+        id: modules-cache
+        uses: actions/cache@v2
+        with:
+          path: "node_modules"
+          key: node-modules-${{ hashFiles('package.json') }}
+
+      - name: Install node modules
+        if: steps.modules-cache.outputs.cache-hit != 'true'
+        run: npm install
+
+  deploy:
+    needs: [rules, lint]
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: ${{ needs.rules.outputs.should_deploy == 'true' }}
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Caching node modules
+        id: modules-cache
+        uses: actions/cache@v2
+        with:
+          path: "node_modules"
+          key: node-modules-${{ hashFiles('package.json') }}
+
+      - name: Install node modules
+        if: steps.modules-cache.outputs.cache-hit != 'true'
+        run: npm install
+
+      - name: Building code
+        run: npm run build && cp package.json build/package.json
+
+      - name: Commit code for tinymce-react
+        run: |
+          cp package.json ./build
+          cd build
+          git init
+          git config user.email "admin@apty.io"
+          git config user.name "git-ci"
+          git add .
+          git commit -m "${{needs.rules.outputs.branch_name}}-${{github.event.head_commit.message}}" -a
+          git remote add origin "git@github.com:aptyInc/tinymce-react.git"
+          git checkout -b "${{needs.rules.outputs.branch_name}}-${{ github.sha }}"
+          git push origin "${{needs.rules.outputs.branch_name}}-${{ github.sha }}"
+  notifications:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [rules, deploy]
+    steps:
+      - uses: actions/checkout@master
+      - name: Getting user profile url
+        id: user_profile
+        uses: saiumesh535/gh-avatar-url@main
+        with:
+          username: ${{github.actor}}

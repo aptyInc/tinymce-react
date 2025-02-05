@@ -1,7 +1,7 @@
 {
-  "description": "Official TinyMCE React Component",
+  "description": "Apty TinyMCE React component",
   "repository": {
-    "url": "https://github.com/tinymce/tinymce-react"
+    "url": "https://github.com/aptyInc/tinymce-react"
   },
   "files": [
     "lib",
