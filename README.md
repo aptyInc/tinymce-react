@@ -1,6 +1,9 @@
-We use this forked code from tinymce react to resolve chrome store publishing issues for the editor extension.
+We use a forked version of TinyMCE React to resolve Chrome Web Store publishing issues for the editor extension.
 
-Refer this document for more info on chrome store publishing issue - https://apty.atlassian.net/wiki/spaces/ENG/pages/684458007/Publish+studio+extension+on+chrome+store
+For more details on the Chrome Web Store publishing issue, refer to this document:
+https://apty.atlassian.net/wiki/spaces/ENG/pages/684458007/Publish+studio+extension+on+chrome+store
+
+Additionally, a pull request has been created in this project containing the necessary changes required before publishing the editor extension.
 
 
 # Official TinyMCE React component
